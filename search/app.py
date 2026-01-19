@@ -1,5 +1,4 @@
 import os
-import csv
 from flask import Flask, request, jsonify
 from redis import Redis
 from flasgger import Swagger
