@@ -1,3 +1,4 @@
+async-timeout==5.0.1
 attrs==25.4.0
 blinker==1.9.0
 click==8.3.1
@@ -11,6 +12,7 @@ MarkupSafe==3.0.3
 mistune==3.2.0
 packaging==25.0
 PyYAML==6.0.3
+redis==7.1.0
 referencing==0.37.0
 rpds-py==0.30.0
 six==1.17.0
