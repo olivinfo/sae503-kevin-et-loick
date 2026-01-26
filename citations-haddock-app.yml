@@ -19,8 +19,20 @@ spec:
       containers:
       - name: quotes
         image: ghcr.io/olivinfo/sae503-kevin-et-loick-quotes:main
+        env:
+        - name: REDIS_HOST
+          value: "redis"
+        - name: ADMIN_KEY
+          value: "supersecurekey"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DB
+          value: "0"
+        - name: APP_PORT
+          value: "5000"
         ports:
         - containerPort: 8000
+        imagePullPolicy: Always
       imagePullSecrets:
         - name: regcred
 ---
@@ -45,6 +57,18 @@ spec:
         image: ghcr.io/olivinfo/sae503-kevin-et-loick-search:main
         ports:
         - containerPort: 8000
+        env:
+        - name: REDIS_HOST
+          value: "redis"
+        - name: ADMIN_KEY
+          value: "supersecurekey"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DB
+          value: "0"
+        - name: APP_PORT
+          value: "5000"
+        imagePullPolicy: Always
       imagePullSecrets:
         - name: regcred
 ---
@@ -69,6 +93,18 @@ spec:
         image: ghcr.io/olivinfo/sae503-kevin-et-loick-users:main
         ports:
         - containerPort: 8000
+        env:
+        - name: REDIS_HOST
+          value: "redis"
+        - name: ADMIN_KEY
+          value: "supersecurekey"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_DB
+          value: "0"
+        - name: APP_PORT
+          value: "5000"
+        imagePullPolicy: Always
       imagePullSecrets:
         - name: regcred
 # volume for redis
@@ -107,6 +143,8 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: redis
+  labels:
+    app: redis
 spec:
   restartPolicy: Always
   containers:
@@ -114,11 +152,25 @@ spec:
     image: redis:7.4-alpine
     volumeMounts:
       - mountPath: "/data"
-        name: mypd
+        name: redis-data
   volumes:
-    - name: mypd
+    - name: redis-data
       persistentVolumeClaim:
         claimName: redis-pvc
+---
+# redis service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+    - name: tcp
+      port: 6379
+      targetPort: 6379
 # app services
 ---
 apiVersion: v1
@@ -128,6 +180,7 @@ metadata:
   labels:
     app: citations-haddock
 spec:
+  type: ClusterIP
   selector:
     app: citations-haddock
     component: quotes
@@ -144,6 +197,7 @@ metadata:
   labels:
     app: citations-haddock
 spec:
+  type: ClusterIP
   selector:
     app: citations-haddock
     component: search
@@ -160,6 +214,7 @@ metadata:
   labels:
     app: citations-haddock
 spec:
+  type: ClusterIP
   selector:
     app: citations-haddock
     component: users
