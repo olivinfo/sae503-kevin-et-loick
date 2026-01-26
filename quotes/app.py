@@ -2,6 +2,9 @@ import os
 import csv
 from flask import Flask, request, jsonify
 from redis import Redis
+from redis.retry import Retry
+from redis.exceptions import (TimeoutError, ConnectionError)
+from redis.backoff import ExponentialBackoff
 from flasgger import Swagger
 from functools import wraps
 
@@ -18,7 +21,10 @@ app = Flask(__name__)
 swagger = Swagger(app)
 
 # Connexion à Redis
-redis_client = Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True)
+redis_client = Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True, retry=Retry(ExponentialBackoff(cap=10, base=1), 25), retry_on_error=[ConnectionError, TimeoutError, ConnectionResetError], health_check_interval=1)
+
+print("Connecting to redis ...")
+redis_client.ping()
 
 def require_auth(f):
     @wraps(f)

@@ -1,0 +1,195 @@
+# apps: quotes, search and users
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quotes-deployment
+  labels:
+    app: citations-haddock
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: citations-haddock
+  template:
+    metadata:
+      labels:
+        app: citations-haddock
+    spec:
+      containers:
+      - name: quotes
+        image: ghcr.io/olivinfo/sae503-kevin-et-loick-quotes:main
+        ports:
+        - containerPort: 8000
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-deployment
+  labels:
+    app: citations-haddock
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: citations-haddock
+  template:
+    metadata:
+      labels:
+        app: citations-haddock
+    spec:
+      containers:
+      - name: search
+        image: ghcr.io/olivinfo/sae503-kevin-et-loick-search:main
+        ports:
+        - containerPort: 8000
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-deployment
+  labels:
+    app: citations-haddock
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: citations-haddock
+  template:
+    metadata:
+      labels:
+        app: citations-haddock
+    spec:
+      containers:
+      - name: users
+        image: ghcr.io/olivinfo/sae503-kevin-et-loick-users:main
+        ports:
+        - containerPort: 8000
+      imagePullSecrets:
+        - name: regcred
+# volume for redis
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-pv
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 1G
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/srv/citations-haddock-redis-data"
+  claimRef:
+    name: redis-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1G
+# redis
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redis
+spec:
+  restartPolicy: Always
+  containers:
+  - name: redis
+    image: redis:7.4-alpine
+    volumeMounts:
+      - mountPath: "/data"
+        name: mypd
+  volumes:
+    - name: mypd
+      persistentVolumeClaim:
+        claimName: redis-pvc
+# app services
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quotes-service
+  labels:
+    app: citations-haddock
+spec:
+  selector:
+    app: citations-haddock
+    component: quotes
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: search-service
+  labels:
+    app: citations-haddock
+spec:
+  selector:
+    app: citations-haddock
+    component: search
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-service
+  labels:
+    app: citations-haddock
+spec:
+  selector:
+    app: citations-haddock
+    component: users
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+
+---
+# ingressroutes traefik
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: citations-haddock-ingress
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`172-18-253-221.nip.io`) && PathPrefix(`/quotes`)
+    kind: Rule
+    services:
+    - name: quotes-service
+      port: 8000
+  - match: Host(`172-18-253-221.nip.io`) && PathPrefix(`/search`)
+    kind: Rule
+    services:
+    - name: search-service
+      port: 8000
+  - match: Host(`172-18-253-221.nip.io`) && PathPrefix(`/users`)
+    kind: Rule
+    services:
+    - name: users-service
+      port: 8000
