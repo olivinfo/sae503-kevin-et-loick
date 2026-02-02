@@ -106,7 +106,7 @@ Tu peux ajouter un tableau comparatif dev/prod (ressources, replicas, FQDN, prio
 
 ############################################################################
 
-A faire
+Non complété
 
 ############################################################################
 
