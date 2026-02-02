@@ -20,7 +20,7 @@ Traitez les services externes comme des ressources attachées
 Séparez strictement les étapes d’assemblage et d’exécution
 - Utilisation d'un Dockerfile puis build dans une pipeline et stockage des images dans github. Pull puis déploiment de ces images dans Kubernetes.
 
-VI. Processus
+### VI. Processus
 Exécutez l’application comme un ou plusieurs processus sans état
 - 
 
